@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "noImplicitAny": true,
+    "sourceMap": false,
+    "strict": true,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "declaration": true,
+    "listFiles": false,
+    "lib": [
+      "es6"
+    ],
+    "downlevelIteration": true
+  },
+  "exclude": [
+    ".vscode",
+    ".git",
+    "./local",
+    "./tests",
+    "node_modules"
+  ]
+}
