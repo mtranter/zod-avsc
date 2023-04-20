@@ -23,16 +23,16 @@ export const zodToAvro = (
 ): schema.AvroSchema => {
   return match<{ value: ZodTypeAny }, schema.AvroSchema>({ value: zodType })
     .with({ value: P.instanceOf(ZodOptional) }, (zodObject) => {
-      return [
+      return Array.from(new Set([
         "null",
         zodToAvro(name, zodObject.value.unwrap(), options),
-      ] as schema.AvroSchema;
+      ].flat())) as schema.AvroSchema;
     })
     .with({ value: P.instanceOf(ZodNullable) }, (zodObject) => {
-      return [
+      return Array.from(new Set([
         "null",
         zodToAvro(name, zodObject.value.unwrap(), options),
-      ] as schema.AvroSchema;
+      ])) as schema.AvroSchema;
     })
     .with({ value: P.instanceOf(ZodObject<ZodRawShape>) }, (zodObject) => {
       return parseZodObjectToAvscRecord(name, zodObject.value, options);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parse } from "avsc";
 import { zodToAvro } from "./zod-to-avro";
 
 describe("zod-to-avro", () => {
@@ -106,6 +107,20 @@ describe("zod-to-avro", () => {
   it("optional", () => {
     const description = "Some values";
     const zodValue = z.string({ description }).optional();
+    const avroSchema = zodToAvro("value", zodValue, { namespace });
+    expect(avroSchema).toEqual([
+      "null",
+      {
+        doc: description,
+        name: "value",
+        namespace,
+        type: "string",
+      },
+    ]);
+  });
+  it("nullish", () => {
+    const description = "Some values";
+    const zodValue = z.string({ description }).nullish();
     const avroSchema = zodToAvro("value", zodValue, { namespace });
     expect(avroSchema).toEqual([
       "null",
