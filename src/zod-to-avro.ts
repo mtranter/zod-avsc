@@ -19,42 +19,51 @@ import { schema } from "avsc";
 export const zodToAvro = (
   name: string,
   zodType: ZodTypeAny,
-  options?: { namespace: string }
+  options?: { namespace: string },
+  cache: Map<ZodTypeAny, string> = new Map()
 ): schema.AvroSchema => {
-  return match<{ value: ZodTypeAny }, schema.AvroSchema>({ value: zodType })
+  const fqn = `${options?.namespace}.${name}`;
+  if (cache.has(zodType)) {
+    return cache.get(zodType) as schema.AvroSchema;
+  }
+  const retval = match<{ value: ZodTypeAny }, schema.AvroSchema>({
+    value: zodType,
+  })
     .with({ value: P.instanceOf(ZodOptional) }, (zodObject) => {
-      return Array.from(new Set([
-        "null",
-        zodToAvro(name, zodObject.value.unwrap(), options),
-      ].flat())) as schema.AvroSchema;
+      return Array.from(
+        new Set(
+          [
+            "null",
+            zodToAvro(name, zodObject.value.unwrap(), options, cache),
+          ].flat()
+        )
+      ) as schema.AvroSchema;
     })
     .with({ value: P.instanceOf(ZodNullable) }, (zodObject) => {
-      return Array.from(new Set([
-        "null",
-        zodToAvro(name, zodObject.value.unwrap(), options),
-      ])) as schema.AvroSchema;
+      return Array.from(
+        new Set(
+          ["null", zodToAvro(name, zodObject.value.unwrap(), options, cache)].flat()
+        )
+      ) as schema.AvroSchema;
     })
     .with({ value: P.instanceOf(ZodObject<ZodRawShape>) }, (zodObject) => {
-      return parseZodObjectToAvscRecord(name, zodObject.value, options);
+      cache.set(zodObject.value, fqn);
+      return parseZodObjectToAvscRecord(name, zodObject.value, cache, options);
     })
-    .with({ value: P.instanceOf(ZodString) }, (zodString) => {
-      return {
-        name,
-        type: "string",
-        doc: zodString.value.description,
-        namespace: options?.namespace,
-      };
+    .with({ value: P.instanceOf(ZodString) }, () => {
+      return "string";
     })
     .with({ value: P.instanceOf(ZodUnion) }, (zodUnion) => {
       return Array.from(
         new Set(
           zodUnion.value.options.flatMap((zodType) =>
-            zodToAvro(name, zodType, options)
+            zodToAvro(name, zodType, options, cache)
           )
         )
       );
     })
     .with({ value: P.instanceOf(ZodEnum) }, (zodEnum) => {
+      cache.set(zodEnum.value, fqn);
       return {
         name,
         type: "enum",
@@ -63,63 +72,48 @@ export const zodToAvro = (
         namespace: options?.namespace,
       };
     })
-    .with({ value: P.instanceOf(ZodNumber) }, (zodNumber) => {
-      return {
-        name,
-        type: "double",
-        doc: zodNumber.value.description,
-        namespace: options?.namespace,
-      };
+    .with({ value: P.instanceOf(ZodNumber) }, () => {
+      return "double";
     })
-    .with({ value: P.instanceOf(ZodDate) }, (zodDate) => {
-      return {
-        name,
-        type: "long",
-        doc: zodDate.value.description,
-        namespace: options?.namespace,
-      };
+    .with({ value: P.instanceOf(ZodDate) }, () => {
+      return "long";
     })
     .with({ value: P.instanceOf(ZodArray) }, (zodArray) => {
       return {
-        name,
         type: "array",
-        items: zodToAvro(`${name}-value`, zodArray.value._def.type, options),
-        doc: zodArray.value.description,
-        namespace: options?.namespace,
+        items: zodToAvro(`${name}-value`, zodArray.value._def.type, options, cache),
       };
     })
-    .with({ value: P.instanceOf(ZodBigInt) }, (zodNumber) => {
-      return {
-        name,
-        type: "long",
-        doc: zodNumber.value.description,
-        namespace: options?.namespace,
-      };
+    .with({ value: P.instanceOf(ZodBigInt) }, () => {
+      return "long";
     })
-    .with({ value: P.instanceOf(ZodBoolean) }, (zodNumber) => {
-      return {
-        name,
-        type: "boolean",
-        doc: zodNumber.value.description,
-        namespace: options?.namespace,
-      };
+    .with({ value: P.instanceOf(ZodBoolean) }, () => {
+      return "boolean";
     })
     .otherwise((v) => {
       throw new Error(`Unsupported type ${v}`);
     });
+  return retval;
 };
 
 const parseZodObjectToAvscRecord = (
   name: string,
   zodObject: ZodObject<ZodRawShape>,
+  cache: Map<ZodTypeAny, string>,
   options?: { namespace: string }
 ): schema.RecordType => {
   const shape = zodObject.shape;
   const fields = Object.entries(shape).map((k) => {
-    const type = zodToAvro(k[0], k[1], options);
+    const type = zodToAvro(k[0], k[1], options, cache);
     const name = k[0];
     const doc = k[1].description;
     return { name, type, doc };
   });
-  return { name, type: "record", fields, namespace: options?.namespace };
+  return {
+    name,
+    type: "record",
+    fields,
+    namespace: options?.namespace,
+    doc: zodObject.description,
+  };
 };

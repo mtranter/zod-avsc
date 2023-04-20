@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { parse } from "avsc";
 import { zodToAvro } from "./zod-to-avro";
 
 describe("zod-to-avro", () => {
@@ -8,56 +7,31 @@ describe("zod-to-avro", () => {
     const description = "A string value";
     const zodValue = z.string({ description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toMatchObject({
-      doc: description,
-      name: "value",
-      namespace,
-      type: "string",
-    });
+    expect(avroSchema).toEqual("string");
   });
   it("number", () => {
     const description = "A number value";
     const zodValue = z.number({ description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toMatchObject({
-      doc: description,
-      name: "value",
-      namespace,
-      type: "double",
-    });
+    expect(avroSchema).toEqual("double");
   });
   it("date", () => {
     const description = "A date value";
     const zodValue = z.date({ description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toMatchObject({
-      doc: description,
-      name: "value",
-      namespace,
-      type: "long",
-    });
+    expect(avroSchema).toEqual("long");
   });
   it("bigint", () => {
     const description = "A bigint value";
     const zodValue = z.bigint({ description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toMatchObject({
-      doc: description,
-      name: "value",
-      namespace,
-      type: "long",
-    });
+    expect(avroSchema).toEqual("long");
   });
   it("boolean", () => {
     const description = "A boolean value";
     const zodValue = z.boolean({ description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toMatchObject({
-      doc: description,
-      name: "value",
-      namespace,
-      type: "boolean",
-    });
+    expect(avroSchema).toEqual("boolean");
   });
 
   it("array", () => {
@@ -65,16 +39,8 @@ describe("zod-to-avro", () => {
     const zodValue = z.array(z.string({ description }), { description });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
     expect(avroSchema).toEqual({
-      doc: description,
-      name: "value",
-      namespace,
       type: "array",
-      items: {
-        doc: description,
-        name: "value-value",
-        namespace,
-        type: "string",
-      },
+      items: "string",
     });
   });
   it("union", () => {
@@ -83,54 +49,25 @@ describe("zod-to-avro", () => {
       description,
     });
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toEqual([
-      { name: "value", type: "string", namespace: "com.zodtoavro" },
-      { name: "value", type: "double", namespace: "com.zodtoavro" },
-      { name: "value", type: "boolean", namespace: "com.zodtoavro" },
-      { name: "value", type: "long", namespace: "com.zodtoavro" },
-    ]);
+    expect(avroSchema).toEqual(["string", "double", "boolean", "long"]);
   });
   it("nullable", () => {
     const description = "Some values";
     const zodValue = z.string({ description }).nullable();
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toEqual([
-      "null",
-      {
-        doc: description,
-        name: "value",
-        namespace,
-        type: "string",
-      },
-    ]);
+    expect(avroSchema).toEqual(["null", "string"]);
   });
   it("optional", () => {
     const description = "Some values";
     const zodValue = z.string({ description }).optional();
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toEqual([
-      "null",
-      {
-        doc: description,
-        name: "value",
-        namespace,
-        type: "string",
-      },
-    ]);
+    expect(avroSchema).toEqual(["null", "string"]);
   });
   it("nullish", () => {
     const description = "Some values";
     const zodValue = z.string({ description }).nullish();
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toEqual([
-      "null",
-      {
-        doc: description,
-        name: "value",
-        namespace,
-        type: "string",
-      },
-    ]);
+    expect(avroSchema).toEqual(["null", "string"]);
   });
   it("object", () => {
     const description = "Some values";
@@ -148,30 +85,21 @@ describe("zod-to-avro", () => {
       { description }
     );
     const avroSchema = zodToAvro("value", zodValue, { namespace });
-    expect(avroSchema).toEqual({
+    expect(avroSchema).toMatchObject({
       name: "value",
       type: "record",
       namespace,
+      doc: description,
       fields: [
         {
           doc: undefined,
           name: "name",
-          type: {
-            doc: undefined,
-            name: "name",
-            namespace,
-            type: "string",
-          },
+          type: "string",
         },
         {
           doc: undefined,
           name: "age",
-          type: {
-            doc: undefined,
-            name: "age",
-            namespace,
-            type: "double",
-          },
+          type: "double",
         },
         {
           doc: undefined,
@@ -181,42 +109,22 @@ describe("zod-to-avro", () => {
               {
                 doc: undefined,
                 name: "street",
-                type: {
-                  doc: undefined,
-                  name: "street",
-                  namespace,
-                  type: "string",
-                },
+                type: "string",
               },
               {
                 doc: undefined,
                 name: "city",
-                type: {
-                  doc: undefined,
-                  name: "city",
-                  namespace,
-                  type: "string",
-                },
+                type: "string",
               },
               {
                 doc: undefined,
                 name: "state",
-                type: {
-                  doc: undefined,
-                  name: "state",
-                  namespace,
-                  type: "string",
-                },
+                type: "string",
               },
               {
                 doc: undefined,
                 name: "zip",
-                type: {
-                  doc: undefined,
-                  name: "zip",
-                  namespace,
-                  type: "string",
-                },
+                type: "string",
               },
             ],
             name: "address",
@@ -227,4 +135,79 @@ describe("zod-to-avro", () => {
       ],
     });
   });
+  it("object with duplicate children", () => {
+    const description = "Some values";
+    const address = z.object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      zip: z.string(),
+    });
+    const zodValue = z.object(
+      {
+        name: z.string(),
+        age: z.number(),
+        address,
+        billingAddress: address,
+      },
+      { description }
+    );
+    const avroSchema = zodToAvro("value", zodValue, { namespace });
+
+    expect(avroSchema).toMatchObject({
+      name: "value",
+      type: "record",
+      namespace,
+      doc: description,
+      fields: [
+        {
+          doc: undefined,
+          name: "name",
+          type: "string",
+        },
+        {
+          doc: undefined,
+          name: "age",
+          type: "double",
+        },
+        {
+          doc: undefined,
+          name: "address",
+          type: {
+            fields: [
+              {
+                doc: undefined,
+                name: "street",
+                type: "string",
+              },
+              {
+                doc: undefined,
+                name: "city",
+                type: "string",
+              },
+              {
+                doc: undefined,
+                name: "state",
+                type: "string",
+              },
+              {
+                doc: undefined,
+                name: "zip",
+                type: "string",
+              },
+            ],
+            name: "address",
+            type: "record",
+            namespace,
+          },
+        },
+        {
+          doc: undefined,
+          name: "billingAddress",
+          type: `${namespace}.address`,
+        },
+      ],
+    });
+  });
+  
 });
