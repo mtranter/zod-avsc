@@ -117,7 +117,7 @@ const parseZodObjectToAvscRecord = (
     const doc = k[1].description;
     const fieldDef: schema.RecordType["fields"][number] = { name, type, doc };
     if (type === "null" || (Array.isArray(type) && type.includes("null"))) {
-      fieldDef["default"] = "null";
+      fieldDef["default"] = null;
     }
     return fieldDef;
   });

@@ -125,7 +125,7 @@ describe("zod-to-avro", () => {
                 doc: undefined,
                 name: "zip",
                 type: ["null", "string"],
-                default: "null",
+                default: null,
               },
             ],
             name: "address",
