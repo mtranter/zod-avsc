@@ -79,7 +79,7 @@ describe("zod-to-avro", () => {
           street: z.string(),
           city: z.string(),
           state: z.string(),
-          zip: z.string(),
+          zip: z.string().optional(),
         }),
       },
       { description }
@@ -124,7 +124,8 @@ describe("zod-to-avro", () => {
               {
                 doc: undefined,
                 name: "zip",
-                type: "string",
+                type: ["null", "string"],
+                default: "null",
               },
             ],
             name: "address",
@@ -209,5 +210,4 @@ describe("zod-to-avro", () => {
       ],
     });
   });
-  
 });

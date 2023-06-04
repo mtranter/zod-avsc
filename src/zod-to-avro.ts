@@ -42,7 +42,10 @@ export const zodToAvro = (
     .with({ value: P.instanceOf(ZodNullable) }, (zodObject) => {
       return Array.from(
         new Set(
-          ["null", zodToAvro(name, zodObject.value.unwrap(), options, cache)].flat()
+          [
+            "null",
+            zodToAvro(name, zodObject.value.unwrap(), options, cache),
+          ].flat()
         )
       ) as schema.AvroSchema;
     })
@@ -81,7 +84,12 @@ export const zodToAvro = (
     .with({ value: P.instanceOf(ZodArray) }, (zodArray) => {
       return {
         type: "array",
-        items: zodToAvro(`${name}-value`, zodArray.value._def.type, options, cache),
+        items: zodToAvro(
+          `${name}-value`,
+          zodArray.value._def.type,
+          options,
+          cache
+        ),
       };
     })
     .with({ value: P.instanceOf(ZodBigInt) }, () => {
@@ -107,7 +115,11 @@ const parseZodObjectToAvscRecord = (
     const type = zodToAvro(k[0], k[1], options, cache);
     const name = k[0];
     const doc = k[1].description;
-    return { name, type, doc };
+    const fieldDef: schema.RecordType["fields"][number] = { name, type, doc };
+    if (type === "null" || (Array.isArray(type) && type.includes("null"))) {
+      fieldDef["default"] = "null";
+    }
+    return fieldDef;
   });
   return {
     name,
